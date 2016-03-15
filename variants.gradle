@@ -1,0 +1,33 @@
+ext {
+  basePackageName = "com.gigigo.gradleWorkshop"
+
+  paid = [applicationId: "${basePackageName}.premium",
+          appName    : "My App premium",
+          versionCode: 10101,
+          versionName: "1.0",
+
+          api                : [debug  : 'https://api.q.gigigolabs.com/app_dev.php/v1',
+                                release: 'https://api.gigigolabs.com/v1'],
+          contador: "0",
+          facebookId         : [debug  : '1625304863516',
+                                staging: '1687025386516',
+                                release: '15010098274']
+
+  ]
+
+  free = [applicationId: "${basePackageName}.free",
+          appName    : "My App Free",
+          versionCode: 10101,
+          versionName: "1.0",
+
+          api                : [debug  : 'https://api.q.gigigolabs.com/app_dev.php/v1',
+                                staging  : 'https://api.s.gigigolabs.com/app_dev.php/v1',
+                                release: 'https://api.gigigolabs.com/v1'],
+          contador: "1",
+
+          facebookId         : [debug  : '187023048616',
+                                staging: '1687025304816',
+                                release: '15041074098974']
+
+  ]
+}

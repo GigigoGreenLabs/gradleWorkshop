@@ -1,0 +1,134 @@
+apply plugin: 'com.android.application'
+apply plugin: 'com.neenbedankt.android-apt'
+
+//Vars
+def MODE_DEBUG = "MODE_DEBUG";
+
+def URL_BASE = "URL_BASE";
+def FACEBOOK_ID = "FACEBOOK_ID";
+def IS_FREE = "IS_FREE";
+def COUNT = "COUNT";
+
+android {
+  compileSdkVersion rootProject.ext.androidCompileSdkVersion
+  buildToolsVersion rootProject.ext.androidBuildToolsVersion
+
+  signingConfigs {
+    release {
+      def Properties props = new Properties()
+      def propFile = new File('./signing.properties')
+      if (propFile.canRead()) {
+        props.load(new FileInputStream(propFile))
+
+        if (props != null &&
+            props.containsKey('STORE_FILE') &&
+            props.containsKey('STORE_PASSWORD') &&
+            props.containsKey('KEY_ALIAS') &&
+            props.containsKey('KEY_PASSWORD')) {
+          android.signingConfigs.release.storeFile = file(props.getProperty('STORE_FILE'))
+          android.signingConfigs.release.storePassword = props.getProperty('STORE_PASSWORD')
+          android.signingConfigs.release.keyAlias = props.getProperty('KEY_ALIAS')
+          android.signingConfigs.release.keyPassword = props.getProperty('KEY_PASSWORD')
+        } else {
+          println 'signing.properties found but some entries are missing'
+          android.buildTypes.release.signingConfig = null
+        }
+      } else {
+        println 'signing.properties not found'
+        android.buildTypes.release.signingConfig = null
+      }
+    }
+  }
+
+
+  defaultConfig {
+    minSdkVersion rootProject.ext.androidMinSdkVersion
+    targetSdkVersion rootProject.ext.androidTargetSdkVersion
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_7
+    targetCompatibility JavaVersion.VERSION_1_7
+  }
+
+  buildTypes {
+    debug {
+      debuggable true
+      signingConfig android.signingConfigs.debug
+     }
+    release {
+      debuggable false
+      minifyEnabled false
+      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+      signingConfig signingConfigs.release
+    }
+  }
+
+  productFlavors.whenObjectAdded { flavor ->
+    def flavorData = rootProject.ext[flavor.name]
+    flavor.versionCode flavorData.versionCode
+    flavor.versionName flavorData.versionName
+  }
+  productFlavors {
+    paid {}
+    free {}
+  }
+
+  project.android.applicationVariants.all { variant ->
+
+    variant.productFlavors.each { flavor ->
+
+      def flavorData = rootProject.ext[flavor.name]
+      def appName = flavorData.appName
+      def appId = flavorData.applicationId
+
+      println("**************************************************")
+      println("-------------" + flavor.name + "." + variant.buildType.name + "-------------")
+
+      if (!variant.buildType.name.equals("release")) {
+        appId = appId + "_" + variant.buildType.name
+        appName = appName + " " + variant.buildType.name + "_" + flavorData.versionCode
+      }
+
+      setVariantApplicationId(variant, appId)
+      setVariantResValue(variant, appName, "app_name", STRING.toLowerCase())
+
+      setVariantModeDebugValue(variant, MODE_DEBUG, BOOLEAN)
+      setVariantBuildConfigField(variant, flavorData.api, URL_BASE, STRING)
+      setVariantBuildConfigField(variant, flavorData.contador, COUNT, INT)
+
+      setVariantResValue(variant, flavorData.facebookI, FACEBOOK_ID.toLowerCase(),
+          STRING.toLowerCase())
+      setVariantBuildConfigField(variant, flavor.name.equals("free"), IS_FREE, BOOLEAN)
+
+
+      println("**************************************************")
+    }
+  }
+}
+
+dependencies {
+  compile rootProject.ext.libraries.supportDependencies.libAndroidv7
+  compile rootProject.ext.libraries.supportDependencies.libAndroidDesign
+  compile rootProject.ext.libraries.supportDependencies.libCardView
+  compile rootProject.ext.libraries.supportDependencies.libRecyclerView
+
+  compile rootProject.ext.libraries.daggerDependencies.libDagger
+  apt rootProject.ext.libraries.daggerDependencies.libDaggerCompiler
+  provided rootProject.ext.libraries.daggerDependencies.libAnnotation
+
+  compile rootProject.ext.libraries.imagesDependencies.libPicasso
+  compile rootProject.ext.libraries.imagesDependencies.libGlide
+  compile rootProject.ext.libraries.imagesDependencies.libCircleImage
+
+  compile rootProject.ext.libraries.permissionsDependencies.libDexter
+
+  compile rootProject.ext.libraries.networkDependencies.libGson
+
+  compile rootProject.ext.libraries.libButterknife
+  compile rootProject.ext.libraries.libEventBus
+  compile rootProject.ext.libraries.libJobqueue
+
+  //compile rootProject.ext.modules.presentation
+  //compile rootProject.ext.modules.data
+}
